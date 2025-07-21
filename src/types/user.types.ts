@@ -16,4 +16,4 @@ export interface ICreateUserDTO {
 
 // export type IUpdateUserDTO = Partial<ICreateUserDTO>;
 
-export type IPublicUserDTO = Omit<IUser, 'id' | 'password'>;
+export type IPublicUserDTO = Omit<IUser, 'id' | 'password' | 'createdAt' | 'updatedAt'>;
