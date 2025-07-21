@@ -24,6 +24,7 @@
     "express-validator": "^6.12.2",
     "firebase-admin": "^13.2.0",
     "jsonwebtoken": "^8.5.1",
+    "morgan": "^1.10.1",
     "sequelize": "^6.6.5",
     "sqlite3": "^5.1.7",
     "uuid": "^8.3.2"
@@ -32,6 +33,7 @@
     "@eslint/js": "^9.31.0",
     "@types/dotenv": "^6.1.1",
     "@types/express": "^5.0.3",
+    "@types/morgan": "^1.9.10",
     "@types/node": "^24.0.14",
     "@typescript-eslint/eslint-plugin": "^8.37.0",
     "@typescript-eslint/parser": "^8.37.0",
