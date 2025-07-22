@@ -12,6 +12,7 @@ class UserModel extends Model<UserAttributes, UserCreationAttributes> implements
   public name!: string;
   public email!: string;
   public password!: string;
+  public avatar!: string;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
@@ -41,6 +42,11 @@ UserModel.init(
       allowNull: false,
       // select: false,
     },
+    avatar: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+    },
   },
   {
     sequelize,
@@ -53,10 +59,22 @@ UserModel.init(
           user.password = await bcrypt.hash(user.password, salt);
         }
       },
+      beforeUpdate: async (user: UserModel) => {
+        if (user.changed('password') && user.password) {
+          const salt = await bcrypt.genSalt(10);
+          user.password = await bcrypt.hash(user.password, salt);
+        }
+      },
     },
     defaultScope: {
       // Як приховати пароль та інше за замовчуванням при отриманні
       attributes: { exclude: ['id', 'password', 'createdAt', 'updatedAt'] },
+    },
+    scopes: {
+      // Додатковий scope, якщо потрібно отримати користувача разом з паролем
+      withPassword: {
+        attributes: { include: ['password'] },
+      },
     },
   },
 );
