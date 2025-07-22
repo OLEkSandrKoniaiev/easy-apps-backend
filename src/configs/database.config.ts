@@ -19,6 +19,9 @@ const connectDB = async (): Promise<void> => {
   try {
     await sequelize.authenticate();
     console.log('Connection to SQLite has been established successfully.');
+
+    await sequelize.sync(); // або .sync({ alter: true }) якщо треба адаптувати схеми
+    console.log('All models were synchronized successfully.');
   } catch (error: unknown) {
     if (error instanceof Error) {
       console.error('Unable to connect to the database:', error.message);
