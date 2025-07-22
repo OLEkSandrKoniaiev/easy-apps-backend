@@ -6,9 +6,9 @@ import { FileService } from '../services/file.service';
 export class AuthController {
   static async createUser(req: Request, res: Response) {
     try {
-      const { name, email, password }: ICreateUserDTO = req.body;
+      const { username, email, password }: ICreateUserDTO = req.body;
 
-      if (!name || !email || !password) {
+      if (!username || !email || !password) {
         return res.status(400).json({ error: 'Missing username, e-mail address or password!' });
       }
 
@@ -22,7 +22,7 @@ export class AuthController {
         avatarPath = FileService.saveAvatar(req.file);
       }
 
-      await UserRepository.createUser({ name, email, password, avatar: avatarPath });
+      await UserRepository.createUser({ username, email, password, avatar: avatarPath });
 
       return res.status(201).json({
         message: 'User registered successfully!',

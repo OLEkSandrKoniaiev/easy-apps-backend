@@ -9,7 +9,7 @@ type UserCreationAttributes = Optional<UserAttributes, 'id' | 'createdAt' | 'upd
 
 class UserModel extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   public id!: number;
-  public name!: string;
+  public username!: string;
   public email!: string;
   public password!: string;
   public avatar!: string;
@@ -28,7 +28,7 @@ UserModel.init(
       autoIncrement: true,
       primaryKey: true,
     },
-    name: {
+    username: {
       type: DataTypes.STRING,
       allowNull: false,
     },
