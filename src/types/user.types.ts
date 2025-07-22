@@ -1,6 +1,6 @@
 export interface IUser {
   id: number;
-  name: string;
+  username: string;
   email: string;
   password?: string;
   avatar?: string;
@@ -10,7 +10,7 @@ export interface IUser {
 
 // DTO (Data Transfer Object)
 export interface ICreateUserDTO {
-  name: string;
+  username: string;
   email: string;
   password: string;
   avatar?: string;
