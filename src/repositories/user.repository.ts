@@ -1,4 +1,4 @@
-import { UserModel } from '../models/user.module';
+import { UserModel } from '../models/user.model';
 import { ICreateUserDTO, IUser } from '../types/user.types';
 
 export class UserRepository {
