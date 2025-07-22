@@ -6,3 +6,4 @@ dist
 
 # Завантажені файли користувачів
 /public/uploads/
+temp-uploads/
