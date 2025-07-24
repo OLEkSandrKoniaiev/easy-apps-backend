@@ -4,6 +4,7 @@ import { FileService } from '../services/file.service';
 import { registerUserSchema, loginUserSchema } from '../validation/user.validation';
 import { ILoginUserDTO } from '../types/user.types';
 import Joi from 'joi';
+import { JwtService } from '../services/jwt.service';
 import { UserModel } from '../models/user.model';
 
 export class AuthController {
@@ -40,19 +41,24 @@ export class AuthController {
         }
       }
 
-      await UserRepository.createUser({
+      const newUser = await UserRepository.createUser({
         username,
         email,
         password,
         avatar: avatarPath,
       });
 
+      const accessToken = JwtService.generateAccessToken(newUser.id.toString());
+
       return res.status(201).json({
         message: 'User registered successfully!',
-        accessToken: 'eyJhbGciOiJIUzI1Ni...', // тимчасова заглушка
+        accessToken: accessToken,
       });
     } catch (error: unknown) {
       console.error('Error in AuthController.createUser:', error);
+      if (error instanceof Error && error.message.includes('JWT_ACCESS_SECRET')) {
+        return res.status(500).json({ error: 'Server configuration error: JWT secret not set.' });
+      }
       return res.status(500).json({ error: 'Something went wrong on the server.' });
     }
   }
