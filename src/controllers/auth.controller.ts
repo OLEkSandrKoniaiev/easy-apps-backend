@@ -87,11 +87,16 @@ export class AuthController {
         return res.status(401).json({ error: 'Invalid email or password.' });
       }
 
+      const accessToken = JwtService.generateAccessToken(user.id.toString());
+
       return res.status(200).json({
-        accessToken: 'eyJhbGciOiJIUzI1Ni...', // Тимчасова заглушка
+        accessToken: accessToken,
       });
     } catch (error: unknown) {
       console.error('Error in AuthController.loginUser:', error);
+      if (error instanceof Error && error.message.includes('JWT_ACCESS_SECRET')) {
+        return res.status(500).json({ error: 'Server configuration error: JWT secret not set.' });
+      }
       return res.status(500).json({ error: 'Something went wrong on the server.' });
     }
   }
