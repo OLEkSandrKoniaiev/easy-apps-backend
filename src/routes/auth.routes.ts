@@ -6,7 +6,10 @@ import { handleMulterError } from '../middlewares/multer.middleware';
 const router = Router();
 
 // Це тимчасове місце розташування файлів перед остаточним збереженням
-const upload = multer({ dest: 'temp-uploads/' });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+});
 
 router.post(
   '/register',
