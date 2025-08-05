@@ -10,4 +10,8 @@ export class UserRepository {
   static async findByEmail(email: string): Promise<IUser | null> {
     return UserModel.findOne({ where: { email } });
   }
+
+  static async findById(userId: number): Promise<IUser | null> {
+    return UserModel.findOne({ where: { id: userId } });
+  }
 }

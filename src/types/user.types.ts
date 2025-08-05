@@ -21,6 +21,9 @@ export interface ILoginUserDTO {
   password: string;
 }
 
-export type IUpdateUserDTO = Partial<ICreateUserDTO>;
-
-export type IPublicUserDTO = Omit<IUser, 'id' | 'password' | 'createdAt' | 'updatedAt'>;
+export interface IShowUserDTO {
+  id: number;
+  username: string;
+  email: string;
+  avatar?: string;
+}

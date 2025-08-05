@@ -3,6 +3,7 @@ node_modules/
 .idea/
 .env
 *.sqlite
+*.iml
 
 # Завантажені файли користувачів
 /public/uploads/
