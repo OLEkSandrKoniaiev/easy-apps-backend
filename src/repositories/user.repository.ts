@@ -11,7 +11,7 @@ export class UserRepository {
     return UserModel.findOne({ where: { email } });
   }
 
-  static async findById(userId: string): Promise<IUser | null> {
+  static async findById(userId: number): Promise<IUser | null> {
     return UserModel.findOne({ where: { id: userId } });
   }
 }
