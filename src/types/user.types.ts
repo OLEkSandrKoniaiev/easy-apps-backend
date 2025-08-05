@@ -27,3 +27,9 @@ export interface IShowUserDTO {
   email: string;
   avatar?: string;
 }
+
+export interface IUpdateUserDTO {
+  id: number;
+  username: string;
+  avatar?: string;
+}
