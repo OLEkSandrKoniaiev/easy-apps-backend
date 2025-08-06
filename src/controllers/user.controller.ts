@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { UserRepository } from '../repositories/user.repository';
 import { IShowUserDTO, IUpdateUserDTO } from '../types/user.types';
 import { FileService } from '../services/file.service';
-import { registerUserSchema, updateUserSchema } from '../validation/user.validation';
+import { updateUserSchema } from '../validation/user.validation';
 import Joi from 'joi';
 
 export class UserController {
@@ -97,6 +97,52 @@ export class UserController {
         return res.status(503).json({ error: 'Service is temporarily unavailable.' });
       } else {
         console.error('An unexpected error occurred in updateUser endpoint:', error);
+        return res.status(500).json({ error: 'Internal server error.' });
+      }
+    }
+  }
+
+  static async deleteAvatar(req: Request, res: Response) {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const existingUser = await UserRepository.findById(parseInt(userId));
+
+      if (!existingUser) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const updatedUser = await UserRepository.deleteAvatar(parseInt(userId));
+
+      if (!updatedUser) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      if (existingUser.avatar) {
+        await FileService.deleteAvatar(existingUser.avatar);
+      }
+
+      const userDTO: IShowUserDTO = {
+        id: updatedUser.id,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        avatar: updatedUser.avatar,
+      };
+
+      return res.status(200).json(userDTO);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Error in deleteAvatar:', error.message, error.stack);
+        if (error.message.includes('not found')) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+        return res.status(503).json({ error: 'Service is temporarily unavailable.' });
+      } else {
+        console.error('An unexpected error occurred in deleteAvatar endpoint:', error);
         return res.status(500).json({ error: 'Internal server error.' });
       }
     }
