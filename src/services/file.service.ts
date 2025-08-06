@@ -12,6 +12,16 @@ export class FileService {
   ];
   private static readonly ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
 
+  private static getPublicIdFromUrl(url: string): string | null {
+    const match = url.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.\w{3,4})?$/);
+
+    if (match && match[1]) {
+      return match[1];
+    }
+
+    return null;
+  }
+
   static async saveAvatar(file: Express.Multer.File): Promise<string> {
     // Перевіряємо тип файлу
     const fileExtension = path.extname(file.originalname).toLowerCase();
@@ -34,6 +44,20 @@ export class FileService {
     } catch (error: unknown) {
       console.error('Failed to upload avatar to Cloudinary:', error);
       throw new Error('Failed to save avatar file.');
+    }
+  }
+
+  static async deleteAvatar(avatarUrl: string): Promise<void> {
+    try {
+      const publicId = FileService.getPublicIdFromUrl(avatarUrl);
+      if (publicId) {
+        await cloudinaryService.deleteFile(publicId);
+      } else {
+        console.warn(`Could not extract publicId from URL: ${avatarUrl}`);
+      }
+    } catch (error: unknown) {
+      console.error('Failed to delete avatar from Cloudinary:', error);
+      throw new Error('Failed to delete avatar file.');
     }
   }
 }
