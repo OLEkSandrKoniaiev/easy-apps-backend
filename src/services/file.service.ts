@@ -60,4 +60,46 @@ export class FileService {
       throw new Error('Failed to delete avatar file.');
     }
   }
+
+  static async saveTaskFiles(files: Express.Multer.File[]): Promise<string[]> {
+    for (const file of files) {
+      const fileExtension = path.extname(file.originalname).toLowerCase();
+      if (
+        !FileService.ALLOWED_MIME_TYPES.includes(file.mimetype) ||
+        !FileService.ALLOWED_EXTENSIONS.includes(fileExtension)
+      ) {
+        throw new Error(
+          `Invalid file format for ${file.originalname}. Only JPG, PNG, GIF, WebP are allowed.`,
+        );
+      }
+    }
+
+    const uploadPromises = files.map((file) => cloudinaryService.uploadFile(file.buffer, 'tasks'));
+
+    try {
+      const uploadResults = await Promise.all(uploadPromises);
+      return uploadResults.map((result) => result.secure_url);
+    } catch (error) {
+      console.error('Failed to upload task files to Cloudinary:', error);
+      throw new Error('Failed to save task files.');
+    }
+  }
+
+  static async deleteTaskFiles(fileUrls: string[]): Promise<void> {
+    const deletePromises = fileUrls.map((url) => {
+      const publicId = FileService.getPublicIdFromUrl(url);
+      if (publicId) {
+        return cloudinaryService.deleteFile(publicId);
+      }
+      console.warn(`Could not extract publicId from URL: ${url}`);
+      return Promise.resolve();
+    });
+
+    try {
+      await Promise.all(deletePromises);
+    } catch (error) {
+      console.error('Failed to delete task files from Cloudinary:', error);
+      throw new Error('Failed to delete task files.');
+    }
+  }
 }
