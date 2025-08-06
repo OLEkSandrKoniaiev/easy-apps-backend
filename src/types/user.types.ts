@@ -3,7 +3,7 @@ export interface IUser {
   username: string;
   email: string;
   password?: string;
-  avatar?: string;
+  avatar?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -25,7 +25,7 @@ export interface IShowUserDTO {
   id: number;
   username: string;
   email: string;
-  avatar?: string;
+  avatar?: string | null;
 }
 
 export interface IUpdateUserDTO {

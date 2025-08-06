@@ -12,7 +12,7 @@ class UserModel extends Model<UserAttributes, UserCreationAttributes> implements
   public username!: string;
   public email!: string;
   public password!: string;
-  public avatar!: string;
+  public avatar!: string | null;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
