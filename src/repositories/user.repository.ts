@@ -27,6 +27,27 @@ export class UserRepository {
     return updatedUser.get();
   }
 
+  static async deleteAvatar(userId: number): Promise<IUser | null> {
+    const [affectedRows] = await UserModel.update(
+      { avatar: null },
+      {
+        where: { id: userId },
+      },
+    );
+
+    if (affectedRows === 0) {
+      throw new Error(`User with id ${userId} not found for update.`);
+    }
+
+    const updatedUser = await UserModel.findOne({ where: { id: userId } });
+
+    if (!updatedUser) {
+      throw new Error('Failed to retrieve updated user.');
+    }
+
+    return updatedUser.get();
+  }
+
   static async findByEmail(email: string): Promise<IUser | null> {
     return UserModel.findOne({ where: { email } });
   }

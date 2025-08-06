@@ -6,7 +6,6 @@ dotenv.config();
 
 export class CloudinaryService {
   constructor() {
-    // Конфігурація Cloudinary з використанням змінних середовища
     cloudinary.config({
       cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
       api_key: process.env.CLOUDINARY_API_KEY,
@@ -46,6 +45,17 @@ export class CloudinaryService {
       readableStream.push(null); // Сигналізуємо про кінець стріму
       readableStream.pipe(uploadStream);
     });
+  }
+
+  async deleteFile(publicId: string) {
+    try {
+      const result = await cloudinary.uploader.destroy(publicId);
+      console.log(`Cloudinary: deleted file with publicId ${publicId}. Result:`, result);
+      return result;
+    } catch (error: unknown) {
+      console.error(`Cloudinary: failed to delete file with publicId ${publicId}. Error:`, error);
+      throw new Error('Failed to delete file from Cloudinary.');
+    }
   }
 }
 

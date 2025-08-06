@@ -20,5 +20,6 @@ router.put(
   UserController.validateUserUpdate,
   UserController.updateUser,
 );
+router.delete('/avatar', authMiddleware, UserController.deleteAvatar);
 
 export default router;
