@@ -16,6 +16,7 @@ router.post(
   authMiddleware,
   upload.array('files', 20),
   handleMulterError,
+  TaskController.validateTaskCreation,
   TaskController.createTask,
 );
 
