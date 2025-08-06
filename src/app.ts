@@ -2,6 +2,7 @@ import express from 'express';
 import morgan from 'morgan';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
+import taskRoutes from './routes/task.routes';
 import cors from 'cors';
 
 const app = express();
@@ -20,6 +21,7 @@ if (process.env.NODE_ENV === 'production') {
 // Шляхи
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
+app.use('/tasks', taskRoutes);
 
 app.get('/', (_req, res) => {
   res.send('Hello World');
