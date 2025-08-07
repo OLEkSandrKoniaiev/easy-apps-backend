@@ -37,6 +37,9 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
 
     next();
   } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError || error instanceof jwt.TokenExpiredError) {
+      return res.status(401).json({ message: 'Invalid or expired token' });
+    }
     console.error('Unexpected error in auth middleware:', error);
     return res.status(500).json({ message: 'An internal server error occurred' });
   }
