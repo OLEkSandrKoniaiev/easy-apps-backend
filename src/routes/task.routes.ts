@@ -19,5 +19,6 @@ router.post(
   TaskController.validateTaskCreation,
   TaskController.createTask,
 );
+router.delete('/:id', authMiddleware, TaskController.deleteTask);
 
 export default router;

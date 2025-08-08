@@ -102,7 +102,7 @@ export class TaskController {
         return res.status(404).json({ error: 'Task not found' });
       }
 
-      return res.status(204).send({ message: 'Task was successfully deleted' });
+      return res.status(200).json({ message: 'Task was successfully deleted.' });
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error('Error in deleteTask:', error.message, error.stack);
