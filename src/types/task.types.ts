@@ -12,7 +12,7 @@ export interface ITask {
 export interface ICreateTaskDTO {
   title: string;
   description: string | null;
-  files: string[] | null;
+  files: string | null;
   userId: number;
 }
 
