@@ -38,11 +38,13 @@ export class TaskController {
         }
       }
 
+      const fileJSON = fileUrls ? JSON.stringify(fileUrls) : null;
+
       const newTask = await TaskRepository.createTask({
         title: title,
         description: description,
         userId: parseInt(userId),
-        files: fileUrls,
+        files: fileJSON,
       });
 
       const taskResponse: IShowTaskDTO = {
@@ -57,6 +59,61 @@ export class TaskController {
     } catch (error: unknown) {
       console.error('Error in TaskController.createTask:', error);
       return res.status(500).json({ error: 'Something went wrong on the server.' });
+    }
+  }
+
+  static async deleteTask(req: Request, res: Response) {
+    try {
+      const userIdFromToken = req.user?.id;
+
+      if (!userIdFromToken) {
+        return res.status(401).json({ error: 'Cannot take user id from jwt access token.' });
+      }
+
+      const taskId = parseInt(req.params.id, 10);
+      if (isNaN(taskId)) {
+        return res.status(400).json({ error: 'Invalid task id in URL.' });
+      }
+
+      const retrievedTask = await TaskRepository.findById(taskId);
+
+      if (!retrievedTask) {
+        return res.status(404).json({ error: 'Task not found' });
+      }
+
+      if (Number(userIdFromToken) !== Number(retrievedTask.userId)) {
+        return res.status(403).json({ error: 'Task does not belong to user.' });
+      }
+
+      const files: string[] | null = retrievedTask.files ? JSON.parse(retrievedTask.files) : null;
+
+      if (files && Array.isArray(files) && files.length > 0) {
+        try {
+          for (const file of files) {
+            await FileService.deleteAvatar(file);
+          }
+        } catch (fileError: unknown) {
+          return res.status(400).json({ error: (fileError as Error).message });
+        }
+      }
+
+      const isDeleted = await TaskRepository.deleteById(taskId);
+      if (!isDeleted) {
+        return res.status(404).json({ error: 'Task not found' });
+      }
+
+      return res.status(204).send({ message: 'Task was successfully deleted' });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Error in deleteTask:', error.message, error.stack);
+        if (error.message.includes('not found')) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+        return res.status(503).json({ error: 'Service is temporarily unavailable.' });
+      } else {
+        console.error('An unexpected error occurred in deleteTask endpoint:', error);
+        return res.status(500).json({ error: 'Internal server error.' });
+      }
     }
   }
 }
