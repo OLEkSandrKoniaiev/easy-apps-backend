@@ -59,4 +59,29 @@ export class TaskController {
       return res.status(500).json({ error: 'Something went wrong on the server.' });
     }
   }
+
+  static async getTasks(req: Request, res: Response) {
+    try {
+      const { id: userId } = req.user!;
+
+      const { page: pageQuery, limit: limitQuery } = req.query;
+
+      let page = parseInt(pageQuery as string, 10);
+      let limit = parseInt(limitQuery as string, 10);
+
+      if (isNaN(page) || page < 1) {
+        page = 1;
+      }
+      if (isNaN(limit) || limit < 1) {
+        limit = 10;
+      }
+
+      const tasksData = await TaskRepository.getTasks(parseInt(userId), page, limit);
+
+      return res.status(200).json(tasksData);
+    } catch (error) {
+      console.error('Error in TaskController.getTasks:', error);
+      return res.status(500).json({ error: 'Something went wrong on the server.' });
+    }
+  }
 }
