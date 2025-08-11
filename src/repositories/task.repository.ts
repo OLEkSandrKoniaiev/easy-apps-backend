@@ -15,4 +15,27 @@ export class TaskRepository {
     const deletedCount = await TaskModel.destroy({ where: { id: taskId } });
     return deletedCount > 0;
   }
+  
+  static async getTasks(
+    userId: number,
+    page: number,
+    tasksPerPage: number,
+  ): Promise<{ total: number; tasks: TaskModel[] }> {
+    const offset = (page - 1) * tasksPerPage;
+
+    const { count, rows } = await TaskModel.findAndCountAll({
+      where: {
+        userId: userId,
+      },
+      attributes: ['id', 'title', 'description', 'files', 'done'],
+      limit: tasksPerPage,
+      offset: offset,
+      order: [['createdAt', 'DESC']],
+    });
+
+    return {
+      total: count,
+      tasks: rows,
+    };
+  }
 }

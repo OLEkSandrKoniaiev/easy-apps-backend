@@ -62,6 +62,49 @@ export class TaskController {
     }
   }
 
+  static async getTask(req: Request, res: Response) {
+    try {
+      const userIdFromToken = req.user?.id;
+
+      if (!userIdFromToken) {
+        return res.status(401).json({ error: 'Cannot take user id from jwt access token.' });
+      }
+
+      const taskId = parseInt(req.params.id, 10);
+      if (isNaN(taskId)) {
+        return res.status(400).json({ error: 'Invalid task id in URL.' });
+      }
+
+      const retrievedTask = await TaskRepository.findById(taskId);
+
+      if (!retrievedTask) {
+        return res.status(404).json({ error: 'Task not found' });
+      }
+
+      if (Number(userIdFromToken) !== Number(retrievedTask.userId)) {
+        return res.status(403).json({ error: 'Task does not belong to user.' });
+      }
+
+      const response: IShowTaskDTO = {
+        id: retrievedTask.id,
+        title: retrievedTask.title,
+        description: retrievedTask.description,
+        done: retrievedTask.done,
+        files: retrievedTask.files,
+      };
+
+      return res.status(200).json(response);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Database query failed for getTask:', error.message, error.stack);
+        return res.status(503).json({ error: 'Service is temporarily unavailable.' });
+      } else {
+        console.error('An unexpected error occurred in getTask endpoint:', error);
+        return res.status(500).json({ error: 'Internal server error.' });
+      }
+    }
+  }
+  
   static async deleteTask(req: Request, res: Response) {
     try {
       const userIdFromToken = req.user?.id;
@@ -114,6 +157,31 @@ export class TaskController {
         console.error('An unexpected error occurred in deleteTask endpoint:', error);
         return res.status(500).json({ error: 'Internal server error.' });
       }
+    }
+  }
+    
+  static async getTasks(req: Request, res: Response) {
+    try {
+      const { id: userId } = req.user!;
+
+      const { page: pageQuery, limit: limitQuery } = req.query;
+
+      let page = parseInt(pageQuery as string, 10);
+      let limit = parseInt(limitQuery as string, 10);
+
+      if (isNaN(page) || page < 1) {
+        page = 1;
+      }
+      if (isNaN(limit) || limit < 1) {
+        limit = 10;
+      }
+
+      const tasksData = await TaskRepository.getTasks(parseInt(userId), page, limit);
+
+      return res.status(200).json(tasksData);
+    } catch (error) {
+      console.error('Error in TaskController.getTasks:', error);
+      return res.status(500).json({ error: 'Something went wrong on the server.' });
     }
   }
 }

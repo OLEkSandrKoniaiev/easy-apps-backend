@@ -23,3 +23,8 @@ export interface IShowTaskDTO {
   files: string | null;
   done: boolean;
 }
+
+export interface IShowTasksListDTO {
+  total: number;
+  tasks: IShowTaskDTO[];
+}
