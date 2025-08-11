@@ -7,6 +7,12 @@ export class TaskRepository {
     return task.get();
   }
 
+
+  static async findById(taskId: number): Promise<ITask | null> {
+    return TaskModel.findOne({ where: { id: taskId } });
+  }
+    
+    
   static async getTasks(
     userId: number,
     page: number,
