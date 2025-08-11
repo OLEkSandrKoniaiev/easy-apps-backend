@@ -43,14 +43,6 @@ TaskModel.init(
       type: DataTypes.TEXT,
       allowNull: true,
       defaultValue: null,
-      get() {
-        const rawValue = this.getDataValue('files');
-        return rawValue ? JSON.parse(rawValue) : null;
-      },
-      set(value: string[] | null) {
-        const stringifyValue = value ? JSON.stringify(value) : null;
-        this.setDataValue('files', stringifyValue);
-      },
     },
     userId: {
       type: DataTypes.INTEGER,
