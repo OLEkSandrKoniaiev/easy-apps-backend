@@ -1,5 +1,8 @@
 import Joi from 'joi';
 
+const cloudinaryTasksUrlRegex =
+  /^https:\/\/res\.cloudinary\.com\/[a-z0-9]+\/image\/upload\/v\d+\/tasks\/[a-z0-9_-]+\.(png|jpg|jpeg|webp|gif)$/i;
+
 export const createTaskSchema = Joi.object({
   title: Joi.string().min(2).max(255).required().messages({
     'string.empty': 'Title cannot be empty.',
@@ -10,5 +13,13 @@ export const createTaskSchema = Joi.object({
 
   description: Joi.string().max(4096).messages({
     'string.max': 'Description should have a maximum length of {#limit}.',
+  }),
+});
+
+export const deleteTaskFileSchema = Joi.object({
+  url: Joi.string().pattern(cloudinaryTasksUrlRegex).required().messages({
+    'string.empty': 'Url cannot be empty.',
+    'string.pattern.base': 'Url format is invalid.',
+    'any.required': 'Url is a required field.',
   }),
 });
