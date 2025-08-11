@@ -12,6 +12,7 @@ const upload = multer({
 });
 
 router.get('/:id', authMiddleware, TaskController.getTask);
+router.get('/', authMiddleware, TaskController.getTasks);
 router.post(
   '',
   authMiddleware,
