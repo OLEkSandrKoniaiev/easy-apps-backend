@@ -3,7 +3,7 @@ import { TaskRepository } from '../repositories/task.repository';
 import { FileService } from '../services/file.service';
 import { IShowTaskDTO } from '../types/task.types';
 import Joi from 'joi';
-import { createTaskSchema } from '../validation/task.validation';
+import { createTaskSchema, deleteTaskFileSchema } from '../validation/task.validation';
 
 export class TaskController {
   static async validateTaskCreation(req: Request, res: Response, next: NextFunction) {
@@ -157,6 +157,75 @@ export class TaskController {
         console.error('An unexpected error occurred in deleteTask endpoint:', error);
         return res.status(500).json({ error: 'Internal server error.' });
       }
+    }
+  }
+
+  static async validateTaskFileDeleting(req: Request, res: Response, next: NextFunction) {
+    try {
+      await deleteTaskFileSchema.validateAsync(req.body, { abortEarly: false });
+      next();
+    } catch (error: unknown) {
+      if (error instanceof Joi.ValidationError) {
+        const errors = error.details.map((detail: Joi.ValidationErrorItem) => detail.message);
+        return res.status(400).json({ errors });
+      }
+      console.error('Unexpected error during validation:', error);
+      return res.status(500).json({ error: 'An unexpected error occurred during validation.' });
+    }
+  }
+
+  static async deleteTaskFile(req: Request, res: Response) {
+    try {
+      const userId = req.user?.id;
+      const { url } = req.body;
+      const taskId = parseInt(req.params.id, 10);
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Cannot take user id from jwt access token.' });
+      }
+
+      if (isNaN(taskId)) {
+        return res.status(400).json({ error: 'Invalid task id in URL.' });
+      }
+
+      const task = await TaskRepository.findById(taskId);
+      if (!task) {
+        return res.status(404).json({ error: 'Task not found' });
+      }
+      if (Number(userId) !== Number(task.userId)) {
+        return res.status(403).json({ error: 'Task does not belong to user.' });
+      }
+
+      const files = task.files ? (JSON.parse(task.files) as string[]) : [];
+      if (!files.includes(url)) {
+        return res.status(404).json({ error: 'File not found in task.' });
+      }
+
+      await FileService.deleteAvatar(url);
+
+      const updatedFiles = files.filter((file) => file !== url);
+
+      const updatedTask = await TaskRepository.deleteFileByUrl(
+        taskId,
+        updatedFiles.length > 0 ? JSON.stringify(updatedFiles) : null,
+      );
+
+      if (!updatedTask) {
+        return res.status(404).json({ error: 'Task not found after update.' });
+      }
+
+      const response: IShowTaskDTO = {
+        id: updatedTask.id,
+        title: updatedTask.title,
+        description: updatedTask.description,
+        done: updatedTask.done,
+        files: updatedTask.files,
+      };
+
+      return res.status(200).json(response);
+    } catch (error: unknown) {
+      console.error('Error in deleteTaskFile:', error);
+      return res.status(500).json({ error: 'Internal server error.' });
     }
   }
 

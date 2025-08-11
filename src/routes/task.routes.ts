@@ -23,4 +23,11 @@ router.post(
 );
 router.delete('/:id', authMiddleware, TaskController.deleteTask);
 
+router.put(
+  '/:id/files',
+  authMiddleware,
+  TaskController.validateTaskFileDeleting,
+  TaskController.deleteTaskFile,
+);
+
 export default router;

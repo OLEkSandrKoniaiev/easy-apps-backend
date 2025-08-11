@@ -16,6 +16,27 @@ export class TaskRepository {
     return deletedCount > 0;
   }
 
+  static async deleteFileByUrl(taskId: number, updFiles: string | null): Promise<ITask | null> {
+    const [affectedRows] = await TaskModel.update(
+      { files: updFiles },
+      {
+        where: { id: taskId },
+      },
+    );
+
+    if (affectedRows === 0) {
+      throw new Error(`Task with id ${taskId} not found for update.`);
+    }
+
+    const updatedTask = await TaskModel.findOne({ where: { id: taskId } });
+
+    if (!updatedTask) {
+      throw new Error('Failed to retrieve updated task.');
+    }
+
+    return updatedTask.get();
+  }
+
   static async getTasks(userId: number): Promise<{ tasks: TaskModel[] }> {
     const { rows } = await TaskModel.findAndCountAll({
       where: {
