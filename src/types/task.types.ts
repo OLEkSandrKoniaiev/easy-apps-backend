@@ -23,6 +23,13 @@ export interface IPartialUpdateTaskDTO {
   done?: boolean;
 }
 
+export interface IUpdateTaskDTO {
+  title: string;
+  description?: string | null;
+  files?: string | null;
+  done: boolean;
+}
+
 export interface IShowTaskDTO {
   id: number;
   title: string;
