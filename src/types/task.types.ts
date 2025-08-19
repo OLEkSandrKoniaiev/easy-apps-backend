@@ -16,6 +16,13 @@ export interface ICreateTaskDTO {
   userId: number;
 }
 
+export interface IPartialUpdateTaskDTO {
+  title?: string;
+  description?: string | null;
+  files?: string | null;
+  done?: boolean;
+}
+
 export interface IShowTaskDTO {
   id: number;
   title: string;

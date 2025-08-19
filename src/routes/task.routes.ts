@@ -21,6 +21,13 @@ router.post(
   TaskController.validateTaskCreation,
   TaskController.createTask,
 );
+router.patch(
+  '/:id',
+  authMiddleware,
+  upload.array('files', 20),
+  handleMulterError,
+  TaskController.partialUpdateTask,
+);
 router.delete('/:id', authMiddleware, TaskController.deleteTask);
 
 router.put(
