@@ -23,3 +23,39 @@ export const deleteTaskFileSchema = Joi.object({
     'any.required': 'Url is a required field.',
   }),
 });
+
+export const updateTaskFileSchema = Joi.object({
+  title: Joi.string().min(2).max(255).required().messages({
+    'string.empty': 'Title cannot be empty.',
+    'string.min': 'Title should have a minimum length of {#limit}.',
+    'string.max': 'Title should have a maximum length of {#limit}.',
+    'any.required': 'Title is a required field.',
+  }),
+  description: Joi.string().max(4096).messages({
+    'string.max': 'Description should have a maximum length of {#limit}.',
+  }),
+  done: Joi.string()
+    .valid('true', 'false', 'True', 'False') // враховує варіанти з великої літери
+    .required()
+    .messages({
+      'any.only': 'Done must be either "true" or "false".',
+      'any.required': 'Done is a required field.',
+    }),
+});
+
+export const partialUpdateTaskFileSchema = Joi.object({
+  title: Joi.string().min(2).max(255).messages({
+    'string.empty': 'Title cannot be empty.',
+    'string.min': 'Title should have a minimum length of {#limit}.',
+    'string.max': 'Title should have a maximum length of {#limit}.',
+  }),
+  description: Joi.string().max(4096).messages({
+    'string.max': 'Description should have a maximum length of {#limit}.',
+  }),
+  done: Joi.string().valid('true', 'false', 'True', 'False').messages({
+    'any.only': 'Done must be either "true" or "false".',
+  }),
+  files: Joi.any().optional().allow(null, '').messages({
+    'any.required': 'Files field is required if present.',
+  }),
+});

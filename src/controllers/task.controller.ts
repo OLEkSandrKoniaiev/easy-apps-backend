@@ -3,7 +3,12 @@ import { TaskRepository } from '../repositories/task.repository';
 import { FileService } from '../services/file.service';
 import { IShowTaskDTO } from '../types/task.types';
 import Joi from 'joi';
-import { createTaskSchema, deleteTaskFileSchema } from '../validation/task.validation';
+import {
+  createTaskSchema,
+  deleteTaskFileSchema,
+  updateTaskFileSchema,
+  partialUpdateTaskFileSchema,
+} from '../validation/task.validation';
 
 export class TaskController {
   static async validateTaskCreation(req: Request, res: Response, next: NextFunction) {
@@ -242,11 +247,37 @@ export class TaskController {
     }
   }
 
+  static async validatePartialUpdateTask(req: Request, res: Response, next: NextFunction) {
+    try {
+      await partialUpdateTaskFileSchema.validateAsync(req.body, { abortEarly: false });
+      next();
+    } catch (error: unknown) {
+      if (error instanceof Joi.ValidationError) {
+        const errors = error.details.map((detail: Joi.ValidationErrorItem) => detail.message);
+        return res.status(400).json({ errors });
+      }
+      console.error('Unexpected error during validation:', error);
+      return res.status(500).json({ error: 'An unexpected error occurred during validation.' });
+    }
+  }
+
   static async partialUpdateTask(req: Request, res: Response) {
     try {
+      const { id: userId } = req.user!;
+
       const taskId = parseInt(req.params.id, 10);
       if (isNaN(taskId)) {
         return res.status(400).json({ error: 'Invalid task id in URL.' });
+      }
+
+      const retrievedTask = await TaskRepository.findById(taskId);
+
+      if (!retrievedTask) {
+        return res.status(404).json({ error: 'Task not found' });
+      }
+
+      if (Number(userId) !== Number(retrievedTask.userId)) {
+        return res.status(403).json({ error: 'Task does not belong to user.' });
       }
 
       const { title, description } = req.body;
@@ -263,6 +294,20 @@ export class TaskController {
       }
 
       const fileJSON = fileUrls ? JSON.stringify(fileUrls) : undefined;
+
+      if (fileJSON) {
+        const files: string[] | null = retrievedTask.files ? JSON.parse(retrievedTask.files) : null;
+
+        if (files && Array.isArray(files) && files.length > 0) {
+          try {
+            for (const file of files) {
+              await FileService.deleteAvatar(file);
+            }
+          } catch (fileError: unknown) {
+            return res.status(400).json({ error: (fileError as Error).message });
+          }
+        }
+      }
 
       const updatedTask = await TaskRepository.updatePartial(taskId, {
         title: title,
@@ -291,6 +336,101 @@ export class TaskController {
         if (error.message.includes('No fields provided for update')) {
           return res.status(400).json({ error: error.message });
         }
+        if (error.message.includes('not found')) {
+          return res.status(404).json({ error: error.message });
+        }
+      }
+
+      return res.status(500).json({ error: 'Internal server error.' });
+    }
+  }
+
+  static async validateUpdateTask(req: Request, res: Response, next: NextFunction) {
+    try {
+      await updateTaskFileSchema.validateAsync(req.body, { abortEarly: false });
+      next();
+    } catch (error: unknown) {
+      if (error instanceof Joi.ValidationError) {
+        const errors = error.details.map((detail: Joi.ValidationErrorItem) => detail.message);
+        return res.status(400).json({ errors });
+      }
+      console.error('Unexpected error during validation:', error);
+      return res.status(500).json({ error: 'An unexpected error occurred during validation.' });
+    }
+  }
+
+  static async updateTask(req: Request, res: Response) {
+    try {
+      const { id: userId } = req.user!;
+
+      const taskId = parseInt(req.params.id, 10);
+      if (isNaN(taskId)) {
+        return res.status(400).json({ error: 'Invalid task id in URL.' });
+      }
+
+      const retrievedTask = await TaskRepository.findById(taskId);
+
+      if (!retrievedTask) {
+        return res.status(404).json({ error: 'Task not found' });
+      }
+
+      if (Number(userId) !== Number(retrievedTask.userId)) {
+        return res.status(403).json({ error: 'Task does not belong to user.' });
+      }
+
+      const { title, description } = req.body;
+      const done = req.body.done.toLowerCase() === 'true';
+
+      let fileUrls: string[] | undefined = undefined;
+
+      if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+        try {
+          fileUrls = await FileService.saveTaskFiles(req.files as Express.Multer.File[]);
+        } catch (fileError: unknown) {
+          return res.status(400).json({ error: (fileError as Error).message });
+        }
+      }
+
+      const fileJSON = fileUrls ? JSON.stringify(fileUrls) : undefined;
+
+      if (fileJSON) {
+        const files: string[] | null = retrievedTask.files ? JSON.parse(retrievedTask.files) : null;
+
+        if (files && Array.isArray(files) && files.length > 0) {
+          try {
+            for (const file of files) {
+              await FileService.deleteAvatar(file);
+            }
+          } catch (fileError: unknown) {
+            return res.status(400).json({ error: (fileError as Error).message });
+          }
+        }
+      }
+
+      const updatedTask = await TaskRepository.update(taskId, {
+        title: title,
+        description: description,
+        files: fileJSON,
+        done: done,
+      });
+
+      if (!updatedTask) {
+        return res.status(404).json({ error: 'Task not found after update.' });
+      }
+
+      const response: IShowTaskDTO = {
+        id: updatedTask.id,
+        title: updatedTask.title,
+        description: updatedTask.description,
+        done: updatedTask.done,
+        files: updatedTask.files,
+      };
+
+      return res.status(200).json(response);
+    } catch (error: unknown) {
+      console.error('Error in updateTask:', error);
+
+      if (error instanceof Error) {
         if (error.message.includes('not found')) {
           return res.status(404).json({ error: error.message });
         }

@@ -1,4 +1,4 @@
-import { ICreateTaskDTO, IPartialUpdateTaskDTO, ITask } from '../types/task.types';
+import { ICreateTaskDTO, IPartialUpdateTaskDTO, IUpdateTaskDTO, ITask } from '../types/task.types';
 import { TaskModel } from '../models/task.model';
 
 export class TaskRepository {
@@ -63,6 +63,24 @@ export class TaskRepository {
       throw new Error('No fields provided for update.');
     }
 
+    const [affectedRows] = await TaskModel.update(data, {
+      where: { id: taskId },
+    });
+
+    if (affectedRows === 0) {
+      throw new Error(`Task with id ${taskId} not found for update.`);
+    }
+
+    const updatedTask = await TaskModel.findOne({ where: { id: taskId } });
+
+    if (!updatedTask) {
+      throw new Error('Failed to retrieve updated task.');
+    }
+
+    return updatedTask.get();
+  }
+
+  static async update(taskId: number, data: IUpdateTaskDTO): Promise<ITask | null> {
     const [affectedRows] = await TaskModel.update(data, {
       where: { id: taskId },
     });
