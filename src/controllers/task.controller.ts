@@ -241,4 +241,62 @@ export class TaskController {
       return res.status(500).json({ error: 'Something went wrong on the server.' });
     }
   }
+
+  static async partialUpdateTask(req: Request, res: Response) {
+    try {
+      const taskId = parseInt(req.params.id, 10);
+      if (isNaN(taskId)) {
+        return res.status(400).json({ error: 'Invalid task id in URL.' });
+      }
+
+      const { title, description } = req.body;
+      const done = req.body.done !== undefined ? req.body.done.toLowerCase() === 'true' : undefined;
+
+      let fileUrls: string[] | undefined = undefined;
+
+      if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+        try {
+          fileUrls = await FileService.saveTaskFiles(req.files as Express.Multer.File[]);
+        } catch (fileError: unknown) {
+          return res.status(400).json({ error: (fileError as Error).message });
+        }
+      }
+
+      const fileJSON = fileUrls ? JSON.stringify(fileUrls) : undefined;
+
+      const updatedTask = await TaskRepository.updatePartial(taskId, {
+        title: title,
+        description: description,
+        files: fileJSON,
+        done: done,
+      });
+
+      if (!updatedTask) {
+        return res.status(404).json({ error: 'Task not found after update.' });
+      }
+
+      const response: IShowTaskDTO = {
+        id: updatedTask.id,
+        title: updatedTask.title,
+        description: updatedTask.description,
+        done: updatedTask.done,
+        files: updatedTask.files,
+      };
+
+      return res.status(200).json(response);
+    } catch (error: unknown) {
+      console.error('Error in partialUpdateTask:', error);
+
+      if (error instanceof Error) {
+        if (error.message.includes('No fields provided for update')) {
+          return res.status(400).json({ error: error.message });
+        }
+        if (error.message.includes('not found')) {
+          return res.status(404).json({ error: error.message });
+        }
+      }
+
+      return res.status(500).json({ error: 'Internal server error.' });
+    }
+  }
 }
