@@ -110,6 +110,32 @@ export class TaskController {
     }
   }
 
+  static async getPaginatedTasks(req: Request, res: Response) {
+    try {
+      const tasksPerPage = Number(req.query.tasksPerPage) || undefined;
+      const page = Number(req.query.page) || undefined;
+
+      if (!page || !tasksPerPage) {
+        return res.status(400).json({ error: 'There is no query params' });
+      }
+
+      if (page <= 0 || tasksPerPage <= 0) {
+        return res
+          .status(400)
+          .json({ error: 'Queries "page" and "tasksPerPage" have to be bigger than 0' });
+      }
+
+      const { id: userId } = req.user!;
+
+      const response = await TaskRepository.getPaginatedTasks(parseInt(userId), tasksPerPage, page);
+
+      return res.status(200).json(response);
+    } catch (error: unknown) {
+      console.error('Error in TaskController.getPaginatedTask:', error);
+      return res.status(500).json({ error: 'Something went wrong on the server.' });
+    }
+  }
+
   static async deleteTask(req: Request, res: Response) {
     try {
       const userIdFromToken = req.user?.id;

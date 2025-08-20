@@ -11,8 +11,9 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-router.get('/:id', authMiddleware, TaskController.getTask);
 router.get('/', authMiddleware, TaskController.getTasks);
+router.get('/all', authMiddleware, TaskController.getPaginatedTasks);
+router.get('/:id', authMiddleware, TaskController.getTask);
 router.post(
   '',
   authMiddleware,
