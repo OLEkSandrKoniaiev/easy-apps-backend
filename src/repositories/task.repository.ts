@@ -51,6 +51,32 @@ export class TaskRepository {
     };
   }
 
+  static async getPaginatedTasks(
+    userId: number,
+    tasksPerPage: number,
+    page: number,
+  ): Promise<{
+    tasks: TaskModel[];
+    taskTotalCount: number;
+  }> {
+    const offset = (page - 1) * tasksPerPage;
+
+    const { rows, count } = await TaskModel.findAndCountAll({
+      where: {
+        userId: userId,
+      },
+      attributes: ['id', 'title', 'description', 'files', 'done'],
+      order: [['createdAt', 'DESC']],
+      limit: tasksPerPage,
+      offset: offset,
+    });
+
+    return {
+      tasks: rows,
+      taskTotalCount: count,
+    };
+  }
+
   static async updatePartial(taskId: number, data: IPartialUpdateTaskDTO): Promise<ITask | null> {
     const updateData: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(data)) {
