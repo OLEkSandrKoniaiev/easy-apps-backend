@@ -3,7 +3,7 @@ export interface IUser {
   username: string;
   email: string;
   password?: string;
-  avatar?: string;
+  avatar?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -21,6 +21,15 @@ export interface ILoginUserDTO {
   password: string;
 }
 
-export type IUpdateUserDTO = Partial<ICreateUserDTO>;
+export interface IShowUserDTO {
+  id: number;
+  username: string;
+  email: string;
+  avatar?: string | null;
+}
 
-export type IPublicUserDTO = Omit<IUser, 'id' | 'password' | 'createdAt' | 'updatedAt'>;
+export interface IUpdateUserDTO {
+  id: number;
+  username: string;
+  avatar?: string;
+}
