@@ -1,34 +1,21 @@
-import { Sequelize } from 'sequelize';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
 
-// Для отримання __dirname в ESM
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Константа-шлях до розташування файлу БД
-const dbPath = path.resolve(__dirname, 'database.sqlite');
-
-const sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage: dbPath,
-  logging: false, // Встановіть true, щоб бачити SQL-запити в консолі
-});
+dotenv.config();
 
 const connectDB = async (): Promise<void> => {
   try {
-    await sequelize.authenticate();
-    console.log('Connection to SQLite has been established successfully.');
+    const conn = await mongoose.connect(process.env.MONGO_URI as string, {});
 
-    await sequelize.sync(); // або .sync({ alter: true }) якщо треба адаптувати схеми
-    console.log('All models were synchronized successfully.');
+    console.log(`MongoDB connected: ${conn.connection.host}`);
   } catch (error: unknown) {
     if (error instanceof Error) {
-      console.error('Unable to connect to the database:', error.message);
+      console.error('Unable to connect to MongoDB:', error.message);
     } else {
-      console.error('An unknown error occurred while connecting to the database:', error);
+      console.error('An unknown error occurred while connecting to MongoDB:', error);
     }
+    process.exit(1);
   }
 };
 
-export { sequelize, connectDB };
+export default connectDB;

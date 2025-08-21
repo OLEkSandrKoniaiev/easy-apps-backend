@@ -1,5 +1,4 @@
 export interface ITask {
-  id: number;
   title: string;
   description: string | null;
   done: boolean;
@@ -31,7 +30,7 @@ export interface IUpdateTaskDTO {
 }
 
 export interface IShowTaskDTO {
-  id: number;
+  _id: string;
   title: string;
   description: string | null;
   files: string | null;

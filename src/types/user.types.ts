@@ -1,5 +1,4 @@
 export interface IUser {
-  id: number;
   username: string;
   email: string;
   password?: string;
@@ -22,14 +21,14 @@ export interface ILoginUserDTO {
 }
 
 export interface IShowUserDTO {
-  id: number;
+  _id: string;
   username: string;
   email: string;
   avatar?: string | null;
 }
 
 export interface IUpdateUserDTO {
-  id: number;
+  _id: string;
   username: string;
   avatar?: string;
 }
