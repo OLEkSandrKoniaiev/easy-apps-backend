@@ -1,58 +1,44 @@
 import { UserModel } from '../models/user.model';
-import { ICreateUserDTO, IUser, IUpdateUserDTO } from '../types/user.types';
+import { ICreateUserDTO, IUpdateUserDTO, IUserResponseDTO } from '../types/user.types';
 
 export class UserRepository {
-  static async createUser(data: ICreateUserDTO): Promise<IUser> {
+  static async createUser(data: ICreateUserDTO): Promise<IUserResponseDTO> {
     const user = await UserModel.create(data);
-    return user.get();
+    return user.toJSON();
   }
 
-  static async updateUser(data: IUpdateUserDTO): Promise<IUser> {
-    const { id, ...updateData } = data;
+  static async updateUser(data: IUpdateUserDTO): Promise<IUserResponseDTO> {
+    const { _id, ...updateData } = data;
 
-    const [affectedRows] = await UserModel.update(updateData, {
-      where: { id },
+    const updatedUser = await UserModel.findByIdAndUpdate(_id, updateData, {
+      new: true,
+      runValidators: true,
     });
 
-    if (affectedRows === 0) {
-      throw new Error(`User with id ${id} not found for update.`);
-    }
-
-    const updatedUser = await UserModel.findOne({ where: { id: id } });
-
     if (!updatedUser) {
-      throw new Error('Failed to retrieve updated user.');
+      throw new Error(`User with id ${_id} not found for update.`);
     }
 
-    return updatedUser.get();
+    return updatedUser.toJSON();
   }
 
-  static async deleteAvatar(userId: number): Promise<IUser | null> {
-    const [affectedRows] = await UserModel.update(
-      { avatar: null },
-      {
-        where: { id: userId },
-      },
-    );
+  static async deleteAvatar(userId: string): Promise<IUserResponseDTO> {
+    const updatedUser = await UserModel.findByIdAndUpdate(userId, { avatar: null }, { new: true });
 
-    if (affectedRows === 0) {
+    if (!updatedUser) {
       throw new Error(`User with id ${userId} not found for update.`);
     }
 
-    const updatedUser = await UserModel.findOne({ where: { id: userId } });
-
-    if (!updatedUser) {
-      throw new Error('Failed to retrieve updated user.');
-    }
-
-    return updatedUser.get();
+    return updatedUser.toJSON();
   }
 
-  static async findByEmail(email: string): Promise<IUser | null> {
-    return UserModel.findOne({ where: { email } });
+  static async findByEmail(email: string): Promise<IUserResponseDTO | null> {
+    const user = await UserModel.findOne({ email });
+    return user ? user.toJSON() : null;
   }
 
-  static async findById(userId: number): Promise<IUser | null> {
-    return UserModel.findOne({ where: { id: userId } });
+  static async findById(userId: string): Promise<IUserResponseDTO | null> {
+    const user = await UserModel.findById(userId);
+    return user ? user.toJSON() : null;
   }
 }

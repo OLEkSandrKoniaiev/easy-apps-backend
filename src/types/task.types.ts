@@ -3,7 +3,7 @@ export interface ITask {
   description: string | null;
   done: boolean;
   files: string | null;
-  userId: number;
+  user: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -12,7 +12,7 @@ export interface ICreateTaskDTO {
   title: string;
   description: string | null;
   files: string | null;
-  userId: number;
+  user: string;
 }
 
 export interface IPartialUpdateTaskDTO {
@@ -37,7 +37,6 @@ export interface IShowTaskDTO {
   done: boolean;
 }
 
-export interface IShowTasksListDTO {
-  total: number;
-  tasks: IShowTaskDTO[];
-}
+export type ITaskResponseDTO = ITask & {
+  _id: unknown;
+};

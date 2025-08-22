@@ -32,3 +32,13 @@ export interface IUpdateUserDTO {
   username: string;
   avatar?: string;
 }
+
+// Коли є необхідність у роботі з mongoose повертати справжній об'єкт
+export type IUserResponseDTO = IUser & {
+  _id: unknown;
+};
+
+// або
+
+// import { HydratedDocument } from "mongoose";
+// Promise<HydratedDocument<IUser>>

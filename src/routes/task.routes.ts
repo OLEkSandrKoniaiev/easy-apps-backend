@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import { handleMulterError } from '../middlewares/multer.middleware';
 import { TaskController } from '../controllers/task.controller';
+import { validateObjectIdParam } from '../middlewares/id.middleware';
 
 const router = Router();
 
@@ -13,7 +14,7 @@ const upload = multer({
 
 router.get('/', authMiddleware, TaskController.getTasks);
 router.get('/all', authMiddleware, TaskController.getPaginatedTasks);
-router.get('/:id', authMiddleware, TaskController.getTask);
+router.get('/:id', authMiddleware, validateObjectIdParam('id'), TaskController.getTask);
 router.post(
   '',
   authMiddleware,
@@ -25,6 +26,7 @@ router.post(
 router.put(
   '/:id',
   authMiddleware,
+  validateObjectIdParam('id'),
   upload.array('files', 20),
   handleMulterError,
   TaskController.validateUpdateTask,
@@ -33,6 +35,7 @@ router.put(
 router.patch(
   '/:id',
   authMiddleware,
+  validateObjectIdParam('id'),
   upload.array('files', 20),
   handleMulterError,
   TaskController.validatePartialUpdateTask,
@@ -43,6 +46,7 @@ router.delete('/:id', authMiddleware, TaskController.deleteTask);
 router.put(
   '/:id/files',
   authMiddleware,
+  validateObjectIdParam('id'),
   TaskController.validateTaskFileDeleting,
   TaskController.deleteTaskFile,
 );

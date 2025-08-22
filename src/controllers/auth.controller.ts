@@ -48,7 +48,9 @@ export class AuthController {
         avatar: avatarPath,
       });
 
-      const accessToken = JwtService.generateAccessToken(newUser.id.toString());
+      const newUserId = newUser._id as string;
+
+      const accessToken = JwtService.generateAccessToken(newUserId.toString());
 
       return res.status(201).json({
         message: 'User registered successfully!',
@@ -81,17 +83,21 @@ export class AuthController {
     try {
       const { email, password }: ILoginUserDTO = req.body;
 
-      const user = await UserModel.scope('withPassword').findOne({ where: { email } });
+      const user = await UserModel.findOne({ email }).select('+password');
 
-      if (!user || !(await user.comparePassword(password))) {
+      if (!user) {
         return res.status(401).json({ error: 'Invalid email or password.' });
       }
 
-      const accessToken = JwtService.generateAccessToken(user.id.toString());
+      const isMatch = await user.comparePassword(password);
+      if (!isMatch) {
+        return res.status(401).json({ error: 'Invalid email or password.' });
+      }
 
-      return res.status(200).json({
-        accessToken: accessToken,
-      });
+      const userId = user._id as string;
+      const accessToken = JwtService.generateAccessToken(userId.toString());
+
+      return res.status(200).json({ accessToken });
     } catch (error: unknown) {
       console.error('Error in AuthController.loginUser:', error);
       if (error instanceof Error && error.message.includes('JWT_ACCESS_SECRET')) {
