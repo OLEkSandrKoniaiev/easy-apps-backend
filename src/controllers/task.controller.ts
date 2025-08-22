@@ -28,10 +28,10 @@ export class TaskController {
   static async createTask(req: Request, res: Response) {
     try {
       const { title, description } = req.body;
-      if (!req.user?.id) {
+      if (!req.user?._id) {
         throw new Error('Invalid user');
       }
-      const userId = req.user.id;
+      const userId = req.user._id;
 
       let fileUrls: string[] | null = null;
 
@@ -48,12 +48,12 @@ export class TaskController {
       const newTask = await TaskRepository.createTask({
         title: title,
         description: description,
-        userId: parseInt(userId),
+        user: userId,
         files: fileJSON,
       });
 
       const taskResponse: IShowTaskDTO = {
-        id: newTask.id,
+        _id: newTask._id as string,
         title: newTask.title,
         description: newTask.description,
         done: newTask.done,
@@ -69,29 +69,25 @@ export class TaskController {
 
   static async getTask(req: Request, res: Response) {
     try {
-      const userIdFromToken = req.user?.id;
+      const userIdFromToken = req.user?._id;
 
       if (!userIdFromToken) {
         return res.status(401).json({ error: 'Cannot take user id from jwt access token.' });
       }
 
-      const taskId = parseInt(req.params.id, 10);
-      if (isNaN(taskId)) {
-        return res.status(400).json({ error: 'Invalid task id in URL.' });
-      }
-
-      const retrievedTask = await TaskRepository.findById(taskId);
+      const taskId = req.params.id;
+      const retrievedTask = await TaskRepository.findById(taskId.toString());
 
       if (!retrievedTask) {
         return res.status(404).json({ error: 'Task not found' });
       }
 
-      if (Number(userIdFromToken) !== Number(retrievedTask.userId)) {
+      if (userIdFromToken != retrievedTask.user) {
         return res.status(403).json({ error: 'Task does not belong to user.' });
       }
 
       const response: IShowTaskDTO = {
-        id: retrievedTask.id,
+        _id: retrievedTask._id as string,
         title: retrievedTask.title,
         description: retrievedTask.description,
         done: retrievedTask.done,
@@ -125,9 +121,9 @@ export class TaskController {
           .json({ error: 'Queries "page" and "tasksPerPage" have to be bigger than 0' });
       }
 
-      const { id: userId } = req.user!;
+      const { _id: userId } = req.user!;
 
-      const response = await TaskRepository.getPaginatedTasks(parseInt(userId), tasksPerPage, page);
+      const response = await TaskRepository.getPaginatedTasks(userId, tasksPerPage, page);
 
       return res.status(200).json(response);
     } catch (error: unknown) {
@@ -138,24 +134,20 @@ export class TaskController {
 
   static async deleteTask(req: Request, res: Response) {
     try {
-      const userIdFromToken = req.user?.id;
+      const userIdFromToken = req.user?._id;
 
       if (!userIdFromToken) {
         return res.status(401).json({ error: 'Cannot take user id from jwt access token.' });
       }
 
-      const taskId = parseInt(req.params.id, 10);
-      if (isNaN(taskId)) {
-        return res.status(400).json({ error: 'Invalid task id in URL.' });
-      }
-
-      const retrievedTask = await TaskRepository.findById(taskId);
+      const taskId = req.params.id;
+      const retrievedTask = await TaskRepository.findById(taskId.toString());
 
       if (!retrievedTask) {
         return res.status(404).json({ error: 'Task not found' });
       }
 
-      if (Number(userIdFromToken) !== Number(retrievedTask.userId)) {
+      if (userIdFromToken != retrievedTask.user) {
         return res.status(403).json({ error: 'Task does not belong to user.' });
       }
 
@@ -171,7 +163,7 @@ export class TaskController {
         }
       }
 
-      const isDeleted = await TaskRepository.deleteById(taskId);
+      const isDeleted = await TaskRepository.deleteById(taskId.toString());
       if (!isDeleted) {
         return res.status(404).json({ error: 'Task not found' });
       }
@@ -207,23 +199,20 @@ export class TaskController {
 
   static async deleteTaskFile(req: Request, res: Response) {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?._id;
       const { url } = req.body;
-      const taskId = parseInt(req.params.id, 10);
 
       if (!userId) {
         return res.status(401).json({ error: 'Cannot take user id from jwt access token.' });
       }
 
-      if (isNaN(taskId)) {
-        return res.status(400).json({ error: 'Invalid task id in URL.' });
-      }
+      const taskId = req.params.id;
+      const task = await TaskRepository.findById(taskId.toString());
 
-      const task = await TaskRepository.findById(taskId);
       if (!task) {
         return res.status(404).json({ error: 'Task not found' });
       }
-      if (Number(userId) !== Number(task.userId)) {
+      if (userId != task.user) {
         return res.status(403).json({ error: 'Task does not belong to user.' });
       }
 
@@ -237,7 +226,7 @@ export class TaskController {
       const updatedFiles = files.filter((file) => file !== url);
 
       const updatedTask = await TaskRepository.deleteFileByUrl(
-        taskId,
+        taskId.toString(),
         updatedFiles.length > 0 ? JSON.stringify(updatedFiles) : null,
       );
 
@@ -246,7 +235,7 @@ export class TaskController {
       }
 
       const response: IShowTaskDTO = {
-        id: updatedTask.id,
+        _id: updatedTask._id as string,
         title: updatedTask.title,
         description: updatedTask.description,
         done: updatedTask.done,
@@ -262,9 +251,9 @@ export class TaskController {
 
   static async getTasks(req: Request, res: Response) {
     try {
-      const { id: userId } = req.user!;
+      const { _id: userId } = req.user!;
 
-      const tasksData = await TaskRepository.getTasks(parseInt(userId));
+      const tasksData = await TaskRepository.getTasks(userId);
 
       return res.status(200).json(tasksData);
     } catch (error) {
@@ -289,20 +278,16 @@ export class TaskController {
 
   static async partialUpdateTask(req: Request, res: Response) {
     try {
-      const { id: userId } = req.user!;
+      const { _id: userId } = req.user!;
 
-      const taskId = parseInt(req.params.id, 10);
-      if (isNaN(taskId)) {
-        return res.status(400).json({ error: 'Invalid task id in URL.' });
-      }
-
-      const retrievedTask = await TaskRepository.findById(taskId);
+      const taskId = req.params.id;
+      const retrievedTask = await TaskRepository.findById(taskId.toString());
 
       if (!retrievedTask) {
         return res.status(404).json({ error: 'Task not found' });
       }
 
-      if (Number(userId) !== Number(retrievedTask.userId)) {
+      if (userId != retrievedTask.user) {
         return res.status(403).json({ error: 'Task does not belong to user.' });
       }
 
@@ -335,7 +320,7 @@ export class TaskController {
         }
       }
 
-      const updatedTask = await TaskRepository.updatePartial(taskId, {
+      const updatedTask = await TaskRepository.updatePartial(taskId.toString(), {
         title: title,
         description: description,
         files: fileJSON,
@@ -347,7 +332,7 @@ export class TaskController {
       }
 
       const response: IShowTaskDTO = {
-        id: updatedTask.id,
+        _id: updatedTask._id as string,
         title: updatedTask.title,
         description: updatedTask.description,
         done: updatedTask.done,
@@ -387,20 +372,16 @@ export class TaskController {
 
   static async updateTask(req: Request, res: Response) {
     try {
-      const { id: userId } = req.user!;
+      const { _id: userId } = req.user!;
 
-      const taskId = parseInt(req.params.id, 10);
-      if (isNaN(taskId)) {
-        return res.status(400).json({ error: 'Invalid task id in URL.' });
-      }
-
-      const retrievedTask = await TaskRepository.findById(taskId);
+      const taskId = req.params.id;
+      const retrievedTask = await TaskRepository.findById(taskId.toString());
 
       if (!retrievedTask) {
         return res.status(404).json({ error: 'Task not found' });
       }
 
-      if (Number(userId) !== Number(retrievedTask.userId)) {
+      if (userId != retrievedTask.user) {
         return res.status(403).json({ error: 'Task does not belong to user.' });
       }
 
@@ -433,7 +414,7 @@ export class TaskController {
         }
       }
 
-      const updatedTask = await TaskRepository.update(taskId, {
+      const updatedTask = await TaskRepository.update(taskId.toString(), {
         title: title,
         description: description,
         files: fileJSON,
@@ -445,7 +426,7 @@ export class TaskController {
       }
 
       const response: IShowTaskDTO = {
-        id: updatedTask.id,
+        _id: updatedTask._id as string,
         title: updatedTask.title,
         description: updatedTask.description,
         done: updatedTask.done,

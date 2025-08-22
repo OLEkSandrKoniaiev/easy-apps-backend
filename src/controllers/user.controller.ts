@@ -8,21 +8,19 @@ import Joi from 'joi';
 export class UserController {
   static async getUser(req: Request, res: Response) {
     try {
-      const userId = req.user?.id;
-      // Надлишкова перевірка
+      const userId = req.user?._id;
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const existingUser = await UserRepository.findById(parseInt(userId));
+      const existingUser = await UserRepository.findById(userId);
 
-      // Перевірка, чи користувача дійсно знайдено в базі даних.
       if (!existingUser) {
         return res.status(404).json({ error: 'User not found' });
       }
 
       const userDTO: IShowUserDTO = {
-        id: existingUser.id,
+        _id: existingUser._id as string,
         username: existingUser.username,
         email: existingUser.email,
         avatar: existingUser?.avatar,
@@ -56,7 +54,7 @@ export class UserController {
 
   static async updateUser(req: Request, res: Response) {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?._id;
 
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
@@ -75,13 +73,13 @@ export class UserController {
       }
 
       const updatedUser = await UserRepository.updateUser({
-        id: parseInt(userId),
+        _id: userId,
         username: username,
         avatar: avatarPath,
       });
 
       const userDTO: IShowUserDTO = {
-        id: updatedUser.id,
+        _id: updatedUser._id as string,
         username: updatedUser.username,
         email: updatedUser.email,
         avatar: updatedUser.avatar,
@@ -104,19 +102,19 @@ export class UserController {
 
   static async deleteAvatar(req: Request, res: Response) {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?._id;
 
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const existingUser = await UserRepository.findById(parseInt(userId));
+      const existingUser = await UserRepository.findById(userId);
 
       if (!existingUser) {
         return res.status(404).json({ error: 'User not found' });
       }
 
-      const updatedUser = await UserRepository.deleteAvatar(parseInt(userId));
+      const updatedUser = await UserRepository.deleteAvatar(userId);
 
       if (!updatedUser) {
         return res.status(404).json({ error: 'User not found' });
@@ -127,7 +125,7 @@ export class UserController {
       }
 
       const userDTO: IShowUserDTO = {
-        id: updatedUser.id,
+        _id: updatedUser._id as string,
         username: updatedUser.username,
         email: updatedUser.email,
         avatar: updatedUser.avatar,

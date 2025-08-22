@@ -1,10 +1,9 @@
 export interface ITask {
-  id: number;
   title: string;
   description: string | null;
   done: boolean;
   files: string | null;
-  userId: number;
+  user: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -13,7 +12,7 @@ export interface ICreateTaskDTO {
   title: string;
   description: string | null;
   files: string | null;
-  userId: number;
+  user: string;
 }
 
 export interface IPartialUpdateTaskDTO {
@@ -31,14 +30,13 @@ export interface IUpdateTaskDTO {
 }
 
 export interface IShowTaskDTO {
-  id: number;
+  _id: string;
   title: string;
   description: string | null;
   files: string | null;
   done: boolean;
 }
 
-export interface IShowTasksListDTO {
-  total: number;
-  tasks: IShowTaskDTO[];
-}
+export type ITaskResponseDTO = ITask & {
+  _id: unknown;
+};

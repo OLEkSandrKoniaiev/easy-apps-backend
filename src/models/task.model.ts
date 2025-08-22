@@ -1,76 +1,46 @@
+import mongoose, { Document, Schema } from 'mongoose';
 import { ITask } from '../types/task.types';
-import { DataTypes, Model, Optional } from 'sequelize';
-import { sequelize } from '../configs/database.config';
-import { UserModel } from './user.model';
+import { IUserDocument } from './user.model';
 
-type TaskAttributes = ITask;
-
-type TaskCreationAttributes = Optional<TaskAttributes, 'id' | 'done' | 'createdAt' | 'updatedAt'>;
-
-class TaskModel extends Model<TaskAttributes, TaskCreationAttributes> implements TaskAttributes {
-  public id!: number;
-  public title!: string;
-  public description!: string | null;
-  public done!: boolean;
-  public files!: string | null;
-  public userId!: number;
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+export interface ITaskDocument extends ITask, Document {
+  user: IUserDocument['_id'];
 }
 
-TaskModel.init(
+const TaskSchema = new Schema<ITaskDocument>(
   {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
     title: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      type: String,
+      required: true,
+      trim: true,
     },
     description: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      defaultValue: null,
+      type: String,
+      default: null,
+      trim: true,
     },
     done: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: false,
+      type: Boolean,
+      default: false,
     },
     files: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-      defaultValue: null,
+      type: String,
+      default: null,
     },
-    userId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'users',
-        key: 'id',
-      },
-      onUpdate: 'CASCADE',
-      onDelete: 'CASCADE',
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
     },
   },
   {
-    sequelize,
-    tableName: 'tasks',
     timestamps: true,
-
-    defaultScope: {
-      attributes: { exclude: ['createdAt', 'updatedAt'] },
-    },
-    scopes: {
-      withDates: {
-        attributes: { include: ['createdAt', 'updatedAt'] },
+    versionKey: false,
+    toJSON: {
+      transform: (_, ret) => {
+        return ret;
       },
     },
   },
 );
 
-TaskModel.belongsTo(UserModel, { foreignKey: 'userId', as: 'user' });
-
-export { TaskModel };
+export const TaskModel = mongoose.model<ITaskDocument>('Task', TaskSchema);

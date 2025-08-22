@@ -1,126 +1,100 @@
-import { ICreateTaskDTO, IPartialUpdateTaskDTO, IUpdateTaskDTO, ITask } from '../types/task.types';
+import {
+  ICreateTaskDTO,
+  IPartialUpdateTaskDTO,
+  IUpdateTaskDTO,
+  ITaskResponseDTO,
+} from '../types/task.types';
 import { TaskModel } from '../models/task.model';
 
 export class TaskRepository {
-  static async createTask(data: ICreateTaskDTO): Promise<ITask> {
+  static async createTask(data: ICreateTaskDTO): Promise<ITaskResponseDTO> {
     const task = await TaskModel.create(data);
-    return task.get();
+    return task.toJSON();
   }
 
-  static async findById(taskId: number): Promise<ITask | null> {
-    return TaskModel.findOne({ where: { id: taskId } });
+  static async findById(taskId: string): Promise<ITaskResponseDTO | null> {
+    const task = await TaskModel.findById(taskId);
+    return task ? task.toJSON() : null;
   }
 
-  static async deleteById(taskId: number): Promise<boolean> {
-    const deletedCount = await TaskModel.destroy({ where: { id: taskId } });
-    return deletedCount > 0;
+  static async deleteById(taskId: string): Promise<boolean> {
+    const result = await TaskModel.deleteOne({ _id: taskId });
+    return result.deletedCount > 0;
   }
 
-  static async deleteFileByUrl(taskId: number, updFiles: string | null): Promise<ITask | null> {
-    const [affectedRows] = await TaskModel.update(
+  static async deleteFileByUrl(
+    taskId: string,
+    updFiles: string | null,
+  ): Promise<ITaskResponseDTO | null> {
+    const updatedTask = await TaskModel.findByIdAndUpdate(
+      taskId,
       { files: updFiles },
-      {
-        where: { id: taskId },
-      },
+      { new: true },
     );
 
-    if (affectedRows === 0) {
+    if (!updatedTask) {
       throw new Error(`Task with id ${taskId} not found for update.`);
     }
 
-    const updatedTask = await TaskModel.findOne({ where: { id: taskId } });
-
-    if (!updatedTask) {
-      throw new Error('Failed to retrieve updated task.');
-    }
-
-    return updatedTask.get();
+    return updatedTask.toJSON();
   }
 
-  static async getTasks(userId: number): Promise<{ tasks: TaskModel[] }> {
-    const { rows } = await TaskModel.findAndCountAll({
-      where: {
-        userId: userId,
-      },
-      attributes: ['id', 'title', 'description', 'files', 'done'],
-      order: [['createdAt', 'DESC']],
-    });
+  static async getTasks(userId: string): Promise<{ tasks: ITaskResponseDTO[] }> {
+    const tasks = await TaskModel.find({ user: userId })
+      .select('_id title description files done')
+      .sort({ createdAt: -1 });
 
-    return {
-      tasks: rows,
-    };
+    return { tasks: tasks.map((t) => t.toJSON()) };
   }
 
   static async getPaginatedTasks(
-    userId: number,
+    userId: string,
     tasksPerPage: number,
     page: number,
   ): Promise<{
-    tasks: TaskModel[];
+    tasks: ITaskResponseDTO[];
     taskTotalCount: number;
   }> {
-    const offset = (page - 1) * tasksPerPage;
+    const skip = (page - 1) * tasksPerPage;
 
-    const { rows, count } = await TaskModel.findAndCountAll({
-      where: {
-        userId: userId,
-      },
-      attributes: ['id', 'title', 'description', 'files', 'done'],
-      order: [['createdAt', 'DESC']],
-      limit: tasksPerPage,
-      offset: offset,
-    });
+    const [tasks, count] = await Promise.all([
+      TaskModel.find({ user: userId })
+        .select('_id title description files done')
+        .sort({ createdAt: -1 })
+        .limit(tasksPerPage)
+        .skip(skip),
+      TaskModel.countDocuments({ user: userId }),
+    ]);
 
     return {
-      tasks: rows,
+      tasks: tasks.map((t) => t.toJSON()),
       taskTotalCount: count,
     };
   }
 
-  static async updatePartial(taskId: number, data: IPartialUpdateTaskDTO): Promise<ITask | null> {
-    const updateData: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(data)) {
-      if (value !== undefined) {
-        updateData[key] = value;
-      }
-    }
-
-    if (Object.keys(updateData).length === 0) {
-      throw new Error('No fields provided for update.');
-    }
-
-    const [affectedRows] = await TaskModel.update(data, {
-      where: { id: taskId },
+  static async updatePartial(
+    taskId: string,
+    data: IPartialUpdateTaskDTO,
+  ): Promise<ITaskResponseDTO | null> {
+    const updatedTask = await TaskModel.findByIdAndUpdate(taskId, data, {
+      new: true,
+      omitUndefined: true,
     });
 
-    if (affectedRows === 0) {
+    if (!updatedTask) {
       throw new Error(`Task with id ${taskId} not found for update.`);
     }
 
-    const updatedTask = await TaskModel.findOne({ where: { id: taskId } });
-
-    if (!updatedTask) {
-      throw new Error('Failed to retrieve updated task.');
-    }
-
-    return updatedTask.get();
+    return updatedTask.toJSON();
   }
 
-  static async update(taskId: number, data: IUpdateTaskDTO): Promise<ITask | null> {
-    const [affectedRows] = await TaskModel.update(data, {
-      where: { id: taskId },
-    });
+  static async update(taskId: string, data: IUpdateTaskDTO): Promise<ITaskResponseDTO | null> {
+    const updatedTask = await TaskModel.findByIdAndUpdate(taskId, data, { new: true });
 
-    if (affectedRows === 0) {
+    if (!updatedTask) {
       throw new Error(`Task with id ${taskId} not found for update.`);
     }
 
-    const updatedTask = await TaskModel.findOne({ where: { id: taskId } });
-
-    if (!updatedTask) {
-      throw new Error('Failed to retrieve updated task.');
-    }
-
-    return updatedTask.get();
+    return updatedTask.toJSON();
   }
 }

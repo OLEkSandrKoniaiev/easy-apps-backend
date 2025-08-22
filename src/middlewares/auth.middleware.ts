@@ -27,13 +27,13 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET) as JwtPayload;
 
     // Це захищає від ситуації, коли токен ще дійсний, а користувача вже видалили.
-    const currentUser = await UserRepository.findById(parseInt(decoded.id));
+    const currentUser = await UserRepository.findById(decoded.id);
 
     if (!currentUser) {
       return res.status(401).json({ message: 'User belonging to this token does no longer exist' });
     }
 
-    req.user = { id: decoded.id };
+    req.user = { _id: decoded.id };
 
     next();
   } catch (error) {
